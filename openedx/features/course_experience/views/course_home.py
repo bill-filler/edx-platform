@@ -113,6 +113,8 @@ class CourseHomeFragmentView(EdxFragmentView):
 
         # Render the full content to enrolled users, as well as to course and global staff.
         # Unenrolled users who are not course or global staff are given only a subset.
+        # User enrollment and anonymity is also used for in course messaging
+        is_anonymous = request.user.is_anonymous()
         is_enrolled = CourseEnrollment.is_enrolled(request.user, course_key)
         is_staff = has_access(request.user, 'staff', course_key)
         if is_enrolled or is_staff:
@@ -149,6 +151,9 @@ class CourseHomeFragmentView(EdxFragmentView):
             'course_key': course_key,
             'outline_fragment': outline_fragment,
             'handouts_html': handouts_html,
+            'is_anonymous': is_anonymous,
+            'is_enrolled': is_enrolled,
+            'is_staff': is_staff,
             'has_visited_course': has_visited_course,
             'resume_course_url': resume_course_url,
             'course_tools': course_tools,
