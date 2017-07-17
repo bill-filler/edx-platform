@@ -1,0 +1,23 @@
+## mako
+
+<%page expression_filter="h"/>
+<%namespace name='static' file='../static_content.html'/>
+
+<%!
+from django.utils.translation import ugettext as _
+from openedx.core.djangolib.js_utils import js_escaped_string
+from openedx.core.djangolib.markup import HTML
+%>
+
+<%block name="content">
+<div class="course-message">
+    <img src="${image_src}"/>
+    % if user_access['is_anonymous']:
+        <h1>Sign in or Register here</h1>
+    % elif user_access['is_staff'] or user_access['is_enrolled'] and days_until_start > 0:
+        <h1>${_Course starts in} ${days_until_start} days on ${course_start_date}.</h1>
+    % elif not user_access['is_anonymous'] and not user_access['is_enrolled']:
+        <h1>Enroll Now :)</h1>
+    % endif
+</div>
+</%block>
