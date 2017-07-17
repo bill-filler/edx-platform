@@ -268,7 +268,7 @@ def course_info(request, course_id):
         masquerade, user = setup_masquerade(request, course_key, staff_access, reset_masquerade_data=True)
 
         # LEARNER-612: CCX redirect handled by new Course Home (DONE)
-        # TODO: LEARNER-1697: Transition banner messages to new Course Home.
+        # LEARNER-1697: Transition banner messages to new Course Home (DONE)
         # if user is not enrolled in a course then app will show enroll/get register link inside course info page.
         user_is_enrolled = CourseEnrollment.is_enrolled(user, course.id)
         show_enroll_banner = request.user.is_authenticated() and not user_is_enrolled
@@ -382,7 +382,7 @@ class StaticCourseTabView(EdxFragmentView):
         course = get_course_with_access(request.user, 'load', course_key)
 
         # Show warnings if the user has limited access
-        CourseTabView.show_user_access_warnings(request, course_key)
+        CourseTabView.register_user_access_warning_messages(request, course_key)
 
         tab = CourseTabList.get_tab_by_slug(course.tabs, tab_slug)
         if tab is None:
@@ -428,7 +428,7 @@ class CourseTabView(EdxFragmentView):
                 check_access_to_course(request, course)
 
                 # Show warnings if the user has limited access
-                self.show_user_access_warnings(request, course_key)
+                self.register_user_access_warning_messages(request, course_key)
 
                 # Render the page
                 tab = CourseTabList.get_tab_by_type(course.tabs, tab_type)
@@ -443,20 +443,17 @@ class CourseTabView(EdxFragmentView):
         """
         Returns the URL to use to enroll in the specified course.
         """
-        # TODO: LEARNER-1697: Transition handling of enroll links in new Course Home.
-        # link to where the student should go to enroll in the course:
-        # about page if there is not marketing site, SITE_NAME if there is
+        # TODO LEARNER-1892: In-place enrollment on course home
         url_to_enroll = reverse('about_course', args=[unicode(course_key)])
         if settings.FEATURES.get('ENABLE_MKTG_SITE'):
             url_to_enroll = marketing_link('COURSES')
         return url_to_enroll
 
     @staticmethod
-    def show_user_access_warnings(request, course_key):
+    def register_user_access_warning_messages(request, course_key):
         """
-        Show messages to the user if they have limited access.
+        Register messages to be shown to the user if they have limited access.
         """
-        # Show messages to the user
         is_enrolled = CourseEnrollment.is_enrolled(request.user, course_key)
         is_staff = has_access(request.user, 'staff', course_key)
         if request.user.is_anonymous():
@@ -464,7 +461,7 @@ class CourseTabView(EdxFragmentView):
                 request,
                 Text(_("To see course content, {sign_in_link} or {register_link}.")).format(
                     sign_in_link=HTML('<a href="/login?next={current_url}">{sign_in_label}</a>').format(
-                        sign_in_label=_("Sign in"),
+                        sign_in_label=_("sign in"),
                         current_url=urlquote_plus(request.path),
                     ),
                     register_link=HTML('<a href="/register?next={current_url}">{register_label}</a>').format(
@@ -476,10 +473,10 @@ class CourseTabView(EdxFragmentView):
         elif not is_enrolled and not is_staff:
             register_warning_message(
                 request,
-                Text(_('You must be enrolled in the course to see course content. {enroll_button}')).format(
-                    enroll_button=HTML('<a href="{url_to_enroll}">{enroll_button_label}</a>').format(
+                Text(_('You must be enrolled in the course to see course content. {enroll_link}.')).format(
+                    enroll_link=HTML('<a href="{url_to_enroll}">{enroll_link_label}</a>').format(
                         url_to_enroll=CourseTabView.url_to_enroll(course_key),
-                        enroll_button_label=_("Enroll Now"),
+                        enroll_link_label=_("Enroll now"),
                     )
                 )
             )
